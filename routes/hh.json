@@ -1,0 +1,27 @@
+{
+    "id": 41,
+    "title": "test tag and comment",
+    "tag": "test",
+    "created_at": "2025-06-03 21:47:43",
+    "last_commented_by": "ade",
+    "author": {
+        "id": 1,
+        "name": "ade",
+        "passport": ""
+    },
+    "comments": [
+        {
+            "id": 57,
+            "created_at": "2025-06-03 21:47:43",
+            "updated_at": "2025-06-03 21:47:43",
+            "user_id": 1,
+            "post_id": 41,
+            "content": "teyueh djdjd djd djd djed ",
+            "replying_to_comment_id": null,
+            "replying_to_user_id": null,
+            "is_reply": 0,
+            "commenter_name": "ade",
+            "commenter_passport": ""
+        }
+    ]
+}
