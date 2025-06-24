@@ -58,6 +58,14 @@ elseif ($uri === 'api/posts') {
     require 'routes/tags.php';
 
 } 
+ elseif ($uri === 'api/user/sync') {
+    require 'routes/users_sync.php';
+
+} 
+ elseif ($uri === 'api/user/sync/update') {
+    require 'routes/users_update_sync.php';
+
+} 
  elseif ($uri === 'api/tags/add') {
     require 'routes/add_tag.php';
 
