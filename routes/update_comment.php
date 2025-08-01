@@ -1,22 +1,18 @@
 <?php
- // cors setup
-
 require 'check_token.php';
 require 'config/db.php'; // mysqli $conn setup
 
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405); // Method Not Allowed
+    http_response_code(405);
     header('Allow: POST');
     echo json_encode(['error' => 'Only POST requests are allowed']);
     exit;
 }
 
-// Get raw input (assuming JSON POST body)
 $input = json_decode(file_get_contents('php://input'), true);
 if (json_last_error() !== JSON_ERROR_NONE) {
-    // Try to get input from $_POST as fallback
     $input = $_POST;
 }
 
@@ -26,7 +22,6 @@ if (!$input) {
     exit;
 }
 
-// Validation function
 function validate($data) {
     $errors = [];
 
@@ -48,7 +43,7 @@ function validate($data) {
 $errors = validate($input);
 
 if (!empty($errors)) {
-    http_response_code(422); // Unprocessable Entity
+    http_response_code(422);
     echo json_encode(['errors' => $errors]);
     exit;
 }
@@ -60,15 +55,35 @@ $content = $input['content'];
 date_default_timezone_set('Africa/Lagos');
 $now = date('Y-m-d H:i:s');
 
-// ✅ Check if the comment exists and belongs to the user
-$checkStmt = $conn->prepare("SELECT * FROM comments WHERE id = ? AND user_id = ?");
-$checkStmt->bind_param("ii", $comment_id, $user_id);
+// ✅ Check user status
+$userStmt = $conn->prepare("SELECT status FROM users WHERE id = ?");
+$userStmt->bind_param("i", $user_id);
+$userStmt->execute();
+$userResult = $userStmt->get_result();
+
+if ($userResult->num_rows === 0) {
+    http_response_code(404);
+    echo json_encode(['error' => 'User not found']);
+    exit;
+}
+
+$userData = $userResult->fetch_assoc();
+$isAdmin = ($userData['status'] === 'admin');
+
+// ✅ Check if comment exists and belongs to user or user is admin
+if ($isAdmin) {
+    $checkStmt = $conn->prepare("SELECT * FROM comments WHERE id = ?");
+    $checkStmt->bind_param("i", $comment_id);
+} else {
+    $checkStmt = $conn->prepare("SELECT * FROM comments WHERE id = ? AND user_id = ?");
+    $checkStmt->bind_param("ii", $comment_id, $user_id);
+}
 $checkStmt->execute();
 $result = $checkStmt->get_result();
 
 if ($result->num_rows === 0) {
-    http_response_code(404);
-    echo json_encode(['error' => 'Comment not found or does not belong to user']);
+    http_response_code(403);
+    echo json_encode(['error' => 'You are not allowed to edit this comment']);
     exit;
 }
 

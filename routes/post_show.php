@@ -1,5 +1,5 @@
 <?php
- ini_set('display_errors', 1);
+ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
@@ -7,7 +7,6 @@ require 'check_token.php';
 require 'config/db.php';
 
 header('Content-Type: application/json');
-
 
 // Validate input
 if (!$postId || !$userId) {
@@ -46,6 +45,7 @@ $commentsSql = "
         comments.*,
         u1.first_name AS commenter_name,
         u1.passport AS commenter_passport,
+        u1.status AS commenter_status,
         u2.first_name AS replying_to_user_name
     FROM comments
     JOIN users u1 ON u1.id = comments.user_id
@@ -71,26 +71,27 @@ $readStmt = $conn->prepare($readSql);
 $readStmt->bind_param('ii', $userId, $postId);
 $readStmt->execute();
 
-
 while ($row = $commentsResult->fetch_assoc()) {
-$comments[] = [
-    'id' => $row['id'],
-    'content' => $row['content'],
-    'post_id' => $row['post_id'],
-    'user_id' => $row['user_id'],
-    'created_at' => $row['created_at'],
-    'updated_at' => $row['updated_at'],
-    'is_reply' => (int)$row['is_reply'],
-    'replying_to_comment_id' => $row['replying_to_comment_id'],
-    'replying_to_user_id' => $row['replying_to_user_id'],
-    'replying_to_user_name' => $row['replying_to_user_name'],
-    'commenter_name' => $row['commenter_name'],
-    'commenter_passport' => $row['commenter_passport'],
-    'commenter_id' => (string)$row['user_id'], // cast to string if needed
-];
+    $comments[] = [
+        'id' => $row['id'],
+        'content' => $row['content'],
+        'post_id' => $row['post_id'],
+        'user_id' => $row['user_id'],
+        'created_at' => $row['created_at'],
+        'updated_at' => $row['updated_at'],
+        'is_reply' => (int)$row['is_reply'],
+        'replying_to_comment_id' => $row['replying_to_comment_id'],
+        'replying_to_user_id' => $row['replying_to_user_id'],
+        'replying_to_user_name' => $row['replying_to_user_name'],
+        'commenter_name' => $row['commenter_name'],
+        'commenter_passport' => $row['commenter_passport'],
+        'commenter_status' => $row['commenter_status'],
+        'commenter_id' => (string)$row['user_id'],
+    ];
 
     $lastCommentedBy = $row['commenter_name'];
 }
+
 // 4. Final response
 $commentsCount = count($comments);
 $response = [

@@ -20,6 +20,7 @@ $commentsSql = "
         comments.is_reply,
         u1.first_name AS commenter_name,
         u1.passport AS commenter_passport,
+        u1.status AS commenter_status,
         u2.first_name AS replying_to_user_name
     FROM comment_likes
     JOIN comments ON comments.id = comment_likes.comment_id
@@ -38,8 +39,8 @@ $comments = [];
 
 while ($row = $commentsResult->fetch_assoc()) {
     $comments[] = [
-        'id' => $row['comment_id'],                  // ID of the comment liked
-        'liked_id' => $row['like_id'],               // ID of the like itself
+        'id' => $row['comment_id'],
+        'liked_id' => $row['like_id'],
         'created_at' => $row['created_at'],
         'updated_at' => $row['updated_at'],
         'user_id' => $row['user_id'],
@@ -48,10 +49,11 @@ while ($row = $commentsResult->fetch_assoc()) {
         'content' => $row['content'],
         'replying_to_comment_id' => $row['replying_to_comment_id'],
         'replying_to_user_id' => $row['replying_to_user_id'],
-        'replying_to_user_name' => $row['replying_to_user_name'],  // ✅ added
+        'replying_to_user_name' => $row['replying_to_user_name'],
         'is_reply' => (int)$row['is_reply'],
         'commenter_name' => $row['commenter_name'],
-        'commenter_passport' => $row['commenter_passport']
+        'commenter_passport' => $row['commenter_passport'],
+        'commenter_status' => $row['commenter_status']
     ];
 }
 

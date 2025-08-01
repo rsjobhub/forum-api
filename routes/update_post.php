@@ -14,7 +14,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Get raw input
 $input = json_decode(file_get_contents('php://input'), true);
 if (json_last_error() !== JSON_ERROR_NONE) {
     $input = $_POST;
@@ -26,7 +25,6 @@ if (!$input) {
     exit;
 }
 
-// Validation
 function validateUpdate($data) {
     $errors = [];
 
@@ -54,7 +52,6 @@ if (!empty($errors)) {
     exit;
 }
 
-// Extract fields
 $post_id = intval($input['post_id']);
 $title = $input['title'];
 $user_id = intval($input['user_id']);
@@ -62,24 +59,45 @@ $user_id = intval($input['user_id']);
 date_default_timezone_set('Africa/Lagos');
 $now = date('Y-m-d H:i:s');
 
-// Check if post exists and belongs to user
-$checkSql = "SELECT * FROM posts WHERE id = ? AND user_id = ?";
-$checkStmt = $conn->prepare($checkSql);
-$checkStmt->bind_param('ii', $post_id, $user_id);
+// ✅ Check user status
+$userStmt = $conn->prepare("SELECT status FROM users WHERE id = ?");
+$userStmt->bind_param("i", $user_id);
+$userStmt->execute();
+$userResult = $userStmt->get_result();
+
+if ($userResult->num_rows === 0) {
+    http_response_code(404);
+    echo json_encode(['error' => 'User not found']);
+    exit;
+}
+
+$userData = $userResult->fetch_assoc();
+$isAdmin = ($userData['status'] === 'admin');
+
+// ✅ Check if post exists and belongs to user or user is admin
+if ($isAdmin) {
+    $checkSql = "SELECT * FROM posts WHERE id = ?";
+    $checkStmt = $conn->prepare($checkSql);
+    $checkStmt->bind_param('i', $post_id);
+} else {
+    $checkSql = "SELECT * FROM posts WHERE id = ? AND user_id = ?";
+    $checkStmt = $conn->prepare($checkSql);
+    $checkStmt->bind_param('ii', $post_id, $user_id);
+}
+
 $checkStmt->execute();
 $result = $checkStmt->get_result();
 
 if ($result->num_rows === 0) {
-    http_response_code(404);
-    echo json_encode(['error' => 'Post not found or does not belong to user']);
+    http_response_code(403);
+    echo json_encode(['error' => 'You are not allowed to edit this post']);
     exit;
 }
 
-// Start update transaction
+// ✅ Start update
 $conn->begin_transaction();
 
 try {
-    // Update post title only
     $updatePostSql = "
         UPDATE posts
         SET title = ?, updated_at = ?

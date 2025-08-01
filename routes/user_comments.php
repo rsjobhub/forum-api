@@ -1,17 +1,18 @@
 <?php
- // cors setup
+// cors setup
 
 require 'check_token.php';
 require 'config/db.php';
 
 header('Content-Type: application/json');
 
-// Fetch all comments made by this user, including name and passport
+// Fetch all comments made by this user, including name, passport, and status
 $commentsSql = "
     SELECT 
         comments.*,
         u1.first_name AS commenter_name,
         u1.passport AS commenter_passport,
+        u1.status AS commenter_status,
         u2.first_name AS replying_to_user_name
     FROM comments
     JOIN users u1 ON u1.id = comments.user_id
@@ -19,7 +20,6 @@ $commentsSql = "
     WHERE comments.user_id = ?
     ORDER BY comments.created_at DESC
 ";
-
 
 $commentsStmt = $conn->prepare($commentsSql);
 $commentsStmt->bind_param('i', $userID);
@@ -42,10 +42,10 @@ while ($row = $commentsResult->fetch_assoc()) {
         'replying_to_user_name' => $row['replying_to_user_name'],
         'commenter_name' => $row['commenter_name'],
         'commenter_passport' => $row['commenter_passport'],
+        'commenter_status' => $row['commenter_status'],
         'commenter_id' => (string)$row['user_id'],
     ];
 }
-
 
 http_response_code(200);
 echo json_encode($comments);
